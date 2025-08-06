@@ -1,0 +1,24 @@
+{
+  "name": "api",
+  "projectType": "application",
+  "sourceRoot": "packages/apps/api/src",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/apps/api",
+        "main": "packages/apps/api/src/main.ts",
+        "tsConfig": "packages/apps/api/tsconfig.app.json",
+        "assets": []
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "api:build",
+        "inspect": false
+      }
+    }
+  }
+}
