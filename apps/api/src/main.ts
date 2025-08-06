@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
@@ -12,6 +13,9 @@ async function bootstrap() {
 
   // Global API prefix
   app.setGlobalPrefix('api');
+
+  // Simple validation pipe - just for basic DTO validation
+  app.useGlobalPipes(new ValidationPipe());
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
