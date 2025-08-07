@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TestImportController } from './test-import.controller';
 import { AuthModule } from './auth/auth.module';
+import { TasksModule } from './tasks/tasks.module';
 import { DatabaseSeedService } from './database/seed.service';
 
 @Module({
@@ -28,6 +29,7 @@ import { DatabaseSeedService } from './database/seed.service';
     
     // Feature modules
     AuthModule,
+    TasksModule,
   ],
   controllers: [AppController, TestImportController],
   providers: [AppService, DatabaseSeedService],
