@@ -1,10 +1,10 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 // Import from libs
-import { User, Organization, Role, RegisterDto, AuthResponseDto, UserProfile, RoleType } from '@data';
+import { User, Organization, Role, RegisterDto, LoginDto, AuthResponseDto, UserProfile, RoleType } from '@data';
 import { AuthService } from '@auth';
 
 @Injectable()
@@ -101,6 +101,38 @@ export class AuthApplicationService {
       isActive: userWithRelations.isActive,
       createdAt: userWithRelations.createdAt,
       updatedAt: userWithRelations.updatedAt
+    };
+
+    return {
+      access_token: tokenResult.access_token,
+      user: userProfile
+    };
+  }
+
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
+    const { email, password } = loginDto;
+
+    // Validate user credentials using the library service
+    const user = await this.authService.validateUser(email, password, this.userRepository);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Generate JWT token using library service
+    const tokenResult = await this.authService.login(user);
+
+    // Create user profile (without password)
+    const userProfile: UserProfile = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role.name,
+      organizationId: user.organizationId,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     };
 
     return {

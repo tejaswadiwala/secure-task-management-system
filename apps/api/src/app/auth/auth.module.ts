@@ -6,7 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Import entities and services from libs
 import { User, Organization, Role, Task, Permission } from '@data';
-import { AuthService } from '@auth';
+import { AuthService, JwtStrategy } from '@auth';
 
 // Local auth components
 import { AuthController } from './auth.controller';
@@ -36,6 +36,7 @@ import { AuthApplicationService } from './auth.service';
   providers: [
     AuthService, // From @auth library
     AuthApplicationService, // Application-specific auth service
+    JwtStrategy, // JWT authentication strategy
   ],
   exports: [AuthService, AuthApplicationService],
 })
