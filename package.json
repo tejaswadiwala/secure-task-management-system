@@ -37,6 +37,7 @@
   "devDependencies": {
     "@nestjs/testing": "^10.4.15",
     "@nx/js": "21.3.11",
+    "@nx/webpack": "^21.3.11",
     "@types/bcrypt": "^6.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.6",
