@@ -13,7 +13,7 @@ export interface JwtStrategyPayload {
   roleLevel: number;
   organizationId: string;
   iat: number;
-  exp: number;
+  exp?: number; // Optional - JWT library sets this automatically
 }
 
 // Local Strategy Validation Result

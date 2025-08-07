@@ -73,7 +73,7 @@ export class AuthService {
       roleLevel: user.role.level,
       organizationId: user.organizationId,
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+      // exp is automatically set by JWT module's expiresIn option
     };
   }
 
