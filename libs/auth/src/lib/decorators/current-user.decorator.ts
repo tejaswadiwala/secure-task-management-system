@@ -2,8 +2,8 @@
 export function CurrentUser() {
   // TODO: Implement current user decorator
   return function (
-    target: any,
-    propertyKey?: string,
-    descriptor?: PropertyDescriptor
+    _target: any,
+    _propertyKey?: string,
+    _descriptor?: PropertyDescriptor
   ) {};
 }

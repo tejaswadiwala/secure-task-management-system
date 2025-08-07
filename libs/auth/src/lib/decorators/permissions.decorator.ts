@@ -1,9 +1,9 @@
 // Permissions Decorator - will be implemented later
-export function Permissions(...permissions: string[]) {
+export function Permissions(..._permissions: string[]) {
   // TODO: Implement permissions decorator
   return function (
-    target: any,
-    propertyKey?: string,
-    descriptor?: PropertyDescriptor
+    _target: any,
+    _propertyKey?: string,
+    _descriptor?: PropertyDescriptor
   ) {};
 }
