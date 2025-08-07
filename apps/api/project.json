@@ -1,16 +1,14 @@
 {
   "name": "api",
   "projectType": "application",
-  "sourceRoot": "packages/apps/api/src",
+  "sourceRoot": "apps/api/src",
   "targets": {
     "build": {
-      "executor": "@nx/js:tsc",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/apps/api",
-        "main": "packages/apps/api/src/main.ts",
-        "tsConfig": "packages/apps/api/tsconfig.app.json",
-        "assets": []
+        "outputPath": "dist/apps/api",
+        "webpackConfig": "apps/api/webpack.config.js"
       }
     },
     "serve": {
