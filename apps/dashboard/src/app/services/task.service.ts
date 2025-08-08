@@ -14,6 +14,12 @@ export interface TaskFilters {
   quickFilter?: string;
 }
 
+export interface BulkUpdateTask {
+  id: string;
+  sortOrder: number;
+  status?: TaskStatus;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -23,7 +29,8 @@ export class TaskService {
   private readonly API_URL = environment.apiUrl;
 
   getTasks(): Observable<TaskResponseDto[]> {
-    return this.http.get<TaskResponseDto[]>(`${this.API_URL}/tasks`).pipe(
+    // Default to sorting by sortOrder to respect drag-and-drop positioning
+    return this.http.get<TaskResponseDto[]>(`${this.API_URL}/tasks?sortBy=sortOrder&sortOrder=ASC`).pipe(
       catchError(this.handleError)
     );
   }
@@ -48,6 +55,13 @@ export class TaskService {
 
   deleteTask(id: string): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/tasks/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // Bulk update for drag-and-drop operations
+  bulkUpdateTasks(updates: BulkUpdateTask[]): Observable<TaskResponseDto[]> {
+    return this.http.put<TaskResponseDto[]>(`${this.API_URL}/tasks/bulk-update`, { tasks: updates }).pipe(
       catchError(this.handleError)
     );
   }

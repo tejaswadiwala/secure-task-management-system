@@ -28,11 +28,18 @@ import { AuthService } from '../services/auth.service';
                   Dashboard
                 </a>
                 <a
-                  routerLink="/tasks"
+                  routerLink="/tasks/board"
                   routerLinkActive="bg-primary-100 text-primary-700"
                   class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-200"
                 >
-                  Tasks
+                  Board View
+                </a>
+                <a
+                  routerLink="/tasks/list"
+                  routerLinkActive="bg-primary-100 text-primary-700"
+                  class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors duration-200"
+                >
+                  List View
                 </a>
 
               </div>
@@ -94,12 +101,20 @@ import { AuthService } from '../services/auth.service';
               Dashboard
             </a>
             <a
-              routerLink="/tasks"
+              routerLink="/tasks/board"
               routerLinkActive="bg-primary-100 text-primary-700"
               class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               (click)="mobileMenuOpen = false"
             >
-              Tasks
+              Board View
+            </a>
+            <a
+              routerLink="/tasks/list"
+              routerLinkActive="bg-primary-100 text-primary-700"
+              class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              (click)="mobileMenuOpen = false"
+            >
+              List View
             </a>
             
             

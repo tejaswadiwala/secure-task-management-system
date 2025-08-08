@@ -14,14 +14,27 @@ export const appRoutes: Route[] = [
   {
     path: 'dashboard',
     canActivate: [AuthGuard],
-    loadComponent: () => import('./tasks/task-list.component').then(c => c.TaskListComponent)
+    loadComponent: () => import('./tasks/task-board.component').then(c => c.TaskBoardComponent)
   },
   {
     path: 'tasks',
     canActivate: [AuthGuard],
-    loadComponent: () => import('./tasks/task-list.component').then(c => c.TaskListComponent)
+    children: [
+      {
+        path: '',
+        redirectTo: 'board',
+        pathMatch: 'full'
+      },
+      {
+        path: 'board',
+        loadComponent: () => import('./tasks/task-board.component').then(c => c.TaskBoardComponent)
+      },
+      {
+        path: 'list',
+        loadComponent: () => import('./tasks/task-list.component').then(c => c.TaskListComponent)
+      }
+    ]
   },
-
   {
     path: '**',
     redirectTo: '/dashboard'

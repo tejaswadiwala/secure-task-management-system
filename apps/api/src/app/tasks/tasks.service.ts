@@ -11,7 +11,8 @@ import {
   TaskResponseDto,
   TaskQueryDto,
   TaskStatus,
-  RoleType 
+  RoleType,
+  BulkUpdateTaskDto 
 } from '@data';
 
 @Injectable()
@@ -234,33 +235,80 @@ export class TasksService {
 
   async deleteTask(taskId: string, currentUser: any): Promise<void> {
     console.log('=== DELETE TASK START ===');
-    console.log('Deleting task:', taskId, 'for user:', currentUser.email);
-
+    console.log('Task ID:', taskId);
+    console.log('Current User:', currentUser.id, currentUser.email);
+    
     try {
       const task = await this.taskRepository.findOne({
         where: { id: taskId },
-        relations: ['owner', 'organization'],
+        relations: ['owner', 'organization']
       });
 
       if (!task) {
-        console.log('Task not found:', taskId);
+        console.log('Task not found');
         throw new NotFoundException('Task not found');
       }
 
-      // Check if user has permission to delete this task
-      const canDelete = await this.checkTaskDeletePermission(task, currentUser);
-      if (!canDelete) {
-        console.log('Delete permission denied for task:', taskId, 'user:', currentUser.email);
-        throw new ForbiddenException('You do not have permission to delete this task');
+      // Check if user can delete this task
+      if (task.ownerId !== currentUser.id && currentUser.role.name !== RoleType.OWNER && currentUser.role.name !== RoleType.ADMIN) {
+        console.log('User not authorized to delete this task');
+        throw new ForbiddenException('You can only delete your own tasks or be an admin/owner');
       }
 
-      console.log('Delete permission granted');
-      await this.taskRepository.delete(taskId);
+      await this.taskRepository.remove(task);
       console.log('Task deleted successfully');
       console.log('=== DELETE TASK SUCCESS ===');
     } catch (error) {
       console.log('=== DELETE TASK ERROR ===');
-      console.log('Task delete error:', error.message);
+      console.log('Delete error:', error.message);
+      console.log('Error details:', error);
+      throw error;
+    }
+  }
+
+  async bulkUpdateTasks(updates: BulkUpdateTaskDto[], currentUser: any): Promise<TaskResponseDto[]> {
+    console.log('=== BULK UPDATE TASKS START ===');
+    console.log('Updates:', updates);
+    console.log('Current User:', currentUser.id, currentUser.email);
+
+    try {
+      const updatedTasks: TaskResponseDto[] = [];
+
+      for (const update of updates) {
+        const task = await this.taskRepository.findOne({
+          where: { id: update.id },
+          relations: ['owner', 'organization']
+        });
+
+        if (!task) {
+          console.log(`Task ${update.id} not found`);
+          continue; // Skip missing tasks
+        }
+
+        // Check if user can update this task
+        if (task.ownerId !== currentUser.id && currentUser.role.name !== RoleType.OWNER && currentUser.role.name !== RoleType.ADMIN) {
+          console.log(`User not authorized to update task ${update.id}`);
+          continue; // Skip unauthorized tasks
+        }
+
+        // Update the task fields
+        if (update.sortOrder !== undefined) {
+          task.sortOrder = update.sortOrder;
+        }
+        if (update.status) {
+          task.status = update.status;
+        }
+
+        const updatedTask = await this.taskRepository.save(task);
+        updatedTasks.push(this.mapToResponseDto(updatedTask));
+      }
+
+      console.log(`Successfully updated ${updatedTasks.length} tasks`);
+      console.log('=== BULK UPDATE TASKS SUCCESS ===');
+      return updatedTasks;
+    } catch (error) {
+      console.log('=== BULK UPDATE TASKS ERROR ===');
+      console.log('Bulk update error:', error.message);
       console.log('Error details:', error);
       throw error;
     }

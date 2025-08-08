@@ -19,7 +19,8 @@ import {
   CreateTaskDto, 
   UpdateTaskDto, 
   TaskResponseDto, 
-  TaskQueryDto 
+  TaskQueryDto,
+  BulkUpdateTaskDto 
 } from '@data';
 import { JwtAuthGuard, CurrentUser } from '@auth';
 
@@ -76,5 +77,14 @@ export class TasksController {
     @CurrentUser() currentUser: any
   ): Promise<void> {
     return await this.tasksService.deleteTask(taskId, currentUser);
+  }
+
+  @Put('bulk-update')
+  @HttpCode(HttpStatus.OK)
+  async bulkUpdateTasks(
+    @Body() bulkUpdateDto: { tasks: BulkUpdateTaskDto[] },
+    @CurrentUser() currentUser: any
+  ): Promise<TaskResponseDto[]> {
+    return await this.tasksService.bulkUpdateTasks(bulkUpdateDto.tasks, currentUser);
   }
 } 
