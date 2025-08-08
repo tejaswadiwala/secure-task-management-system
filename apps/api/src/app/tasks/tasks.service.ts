@@ -13,8 +13,13 @@ import {
   TaskQueryDto,
   TaskStatus,
   RoleType,
-  BulkUpdateTaskDto 
+  BulkUpdateTaskDto,
+  AuditAction,
+  AuditResource 
 } from '@data';
+
+// Import audit service
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class TasksService {
@@ -25,6 +30,7 @@ export class TasksService {
     private organizationRepository: Repository<Organization>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private auditService: AuditService,
   ) {}
 
   async createTask(createTaskDto: CreateTaskDto, currentUser: any): Promise<TaskResponseDto> {
@@ -69,6 +75,28 @@ export class TasksService {
       });
 
       console.log('Task created successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          currentUser.id,
+          AuditAction.CREATE,
+          AuditResource.TASK,
+          {
+            resourceId: savedTask.id,
+            details: {
+              title: savedTask.title,
+              status: savedTask.status,
+              priority: savedTask.priority,
+              ownerId: savedTask.ownerId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== CREATE TASK SUCCESS ===');
 
       return this.mapToResponseDto(taskWithRelations);
@@ -244,6 +272,28 @@ export class TasksService {
       });
 
       console.log('Task updated successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          currentUser.id,
+          AuditAction.UPDATE,
+          AuditResource.TASK,
+          {
+            resourceId: taskId,
+            details: {
+              updatedFields: Object.keys(updateTaskDto),
+              changes: updateTaskDto,
+              previousOwnerId: task.ownerId,
+              newOwnerId: updatedTask.ownerId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== UPDATE TASK SUCCESS ===');
 
       return this.mapToResponseDto(updatedTask);
@@ -279,6 +329,27 @@ export class TasksService {
 
       await this.taskRepository.remove(task);
       console.log('Task deleted successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          currentUser.id,
+          AuditAction.DELETE,
+          AuditResource.TASK,
+          {
+            resourceId: taskId,
+            details: {
+              title: task.title,
+              status: task.status,
+              ownerId: task.ownerId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== DELETE TASK SUCCESS ===');
     } catch (error) {
       console.log('=== DELETE TASK ERROR ===');

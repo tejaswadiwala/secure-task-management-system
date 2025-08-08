@@ -5,8 +5,11 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Import entities and services from libs
-import { User, Organization, Role, Task, Permission } from '@data';
+import { User, Organization, Role, Task, Permission, AuditLog } from '@data';
 import { AuthService, JwtStrategy } from '@auth';
+
+// Import audit service
+import { AuditService } from '../audit/audit.service';
 
 // Local auth components
 import { AuthController } from './auth.controller';
@@ -15,7 +18,7 @@ import { AuthApplicationService } from './auth.service';
 @Module({
   imports: [
     // Import entities for repository injection
-    TypeOrmModule.forFeature([User, Organization, Role, Task, Permission]),
+    TypeOrmModule.forFeature([User, Organization, Role, Task, Permission, AuditLog]),
     
     // Passport for authentication strategies
     PassportModule,
@@ -36,6 +39,7 @@ import { AuthApplicationService } from './auth.service';
   providers: [
     AuthService, // From @auth library
     AuthApplicationService, // Application-specific auth service
+    AuditService, // For audit logging
     JwtStrategy, // JWT authentication strategy
   ],
   exports: [AuthService, AuthApplicationService],

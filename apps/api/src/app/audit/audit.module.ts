@@ -5,25 +5,23 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Import entities from libs
-import { Task, User, Organization, Role, AuditLog } from '@data';
-import { AuthService, JwtStrategy } from '@auth';
-
-// Import audit service
-import { AuditService } from '../audit/audit.service';
+import { AuditLog, User } from '@data';
+import { AuthService, JwtStrategy, RbacGuard, RbacService } from '@auth';
 
 // Local components
-import { TasksController } from './tasks.controller';
-import { TasksService } from './tasks.service';
+import { AuditController } from './audit.controller';
+import { AuditService } from './audit.service';
+import { AuditInterceptor } from './interceptors/audit.interceptor';
 
 @Module({
   imports: [
     // Import entities for repository injection
-    TypeOrmModule.forFeature([Task, User, Organization, Role, AuditLog]),
+    TypeOrmModule.forFeature([AuditLog, User]),
     
     // Passport for authentication strategies
     PassportModule,
     
-    // JWT module configuration (same as AuthModule)
+    // JWT module configuration (same as other modules)
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -35,13 +33,15 @@ import { TasksService } from './tasks.service';
       inject: [ConfigService],
     }),
   ],
-  controllers: [TasksController],
+  controllers: [AuditController],
   providers: [
-    TasksService,
-    AuditService, // For audit logging
+    AuditService,
+    AuditInterceptor, // Audit interceptor for automatic logging
     AuthService, // For JWT functionality
     JwtStrategy, // For route protection
+    RbacGuard, // For role-based access control
+    RbacService, // For role-based access control service
   ],
-  exports: [TasksService],
+  exports: [AuditService, AuditInterceptor], // Export service and interceptor for use in other modules
 })
-export class TasksModule {} 
+export class AuditModule {} 
