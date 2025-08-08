@@ -2,12 +2,9 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from './user.model';
-import { Task } from './task.model';
 
 @Entity('organizations')
 export class Organization {
@@ -23,14 +20,6 @@ export class Organization {
   // Simplified: Optional parent organization (for 2-level hierarchy)
   @Column({ type: 'uuid', nullable: true })
   parentId?: string;
-
-  // Users belonging to this organization
-  @OneToMany(() => User, user => user.organization)
-  users: User[];
-
-  // Tasks belonging to this organization
-  @OneToMany(() => Task, task => task.organization)
-  tasks: Task[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

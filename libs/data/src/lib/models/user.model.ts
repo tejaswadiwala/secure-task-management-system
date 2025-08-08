@@ -3,14 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Organization } from './organization.model';
 import { Role, RoleType } from './role.model';
-import { Task } from './task.model';
 
 @Entity('users')
 export class User {
@@ -38,7 +36,7 @@ export class User {
   organizationId: string;
 
   // Many-to-one relationship with organization
-  @ManyToOne(() => Organization, organization => organization.users, {
+  @ManyToOne(() => Organization, {
     eager: true,
   })
   organization: Organization;
@@ -50,10 +48,6 @@ export class User {
   // Many-to-one relationship with role
   @ManyToOne(() => Role, { eager: true })
   role: Role;
-
-  // One-to-many relationship with tasks (owned by user)
-  @OneToMany(() => Task, task => task.owner)
-  ownedTasks: Task[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
