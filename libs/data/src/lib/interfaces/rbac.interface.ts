@@ -56,21 +56,6 @@ export interface IRbacService {
   ): Promise<boolean>;
 }
 
-// Audit Log Interface
-export interface AuditLog {
-  id: string;
-  userId: string;
-  action: string;
-  resource: string;
-  resourceId?: string;
-  details?: Record<string, any>;
-  ipAddress?: string;
-  userAgent?: string;
-  timestamp: Date;
-  success: boolean;
-  errorMessage?: string;
-}
-
 // Permission Matrix Type
 export type PermissionMatrix = {
   [K in RoleType]: string[];

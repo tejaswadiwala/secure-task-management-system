@@ -6,13 +6,20 @@ import { Repository } from 'typeorm';
 import { 
   Task,  
   Organization, 
+  User,
   CreateTaskDto, 
   UpdateTaskDto, 
   TaskResponseDto,
   TaskQueryDto,
   TaskStatus,
-  RoleType 
+  RoleType,
+  BulkUpdateTaskDto,
+  AuditAction,
+  AuditResource 
 } from '@data';
+
+// Import audit service
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class TasksService {
@@ -21,6 +28,9 @@ export class TasksService {
     private taskRepository: Repository<Task>,
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    private auditService: AuditService,
   ) {}
 
   async createTask(createTaskDto: CreateTaskDto, currentUser: any): Promise<TaskResponseDto> {
@@ -37,16 +47,26 @@ export class TasksService {
 
       console.log('User has permission to create tasks');
 
+      // Determine the owner of the task
+      let taskOwnerId = currentUser.id; // Default to current user
+      
+      if (createTaskDto.ownerId) {
+        console.log('Custom ownerId provided:', createTaskDto.ownerId);
+        // Validate that the proposed owner is valid
+        await this.validateOwnerInOrganization(createTaskDto.ownerId, currentUser);
+        taskOwnerId = createTaskDto.ownerId;
+      }
+
       // Create new task
       const newTask = this.taskRepository.create({
         ...createTaskDto,
-        ownerId: currentUser.id,
+        ownerId: taskOwnerId,
         organizationId: currentUser.organizationId,
       });
 
       console.log('Saving task to database...');
       const savedTask = await this.taskRepository.save(newTask);
-      console.log('Task created with ID:', savedTask.id);
+      console.log('Task created with ID:', savedTask.id, 'assigned to:', taskOwnerId);
 
       // Load task with relations for response
       const taskWithRelations = await this.taskRepository.findOne({
@@ -55,6 +75,28 @@ export class TasksService {
       });
 
       console.log('Task created successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          currentUser.id,
+          AuditAction.CREATE,
+          AuditResource.TASK,
+          {
+            resourceId: savedTask.id,
+            details: {
+              title: savedTask.title,
+              status: savedTask.status,
+              priority: savedTask.priority,
+              ownerId: savedTask.ownerId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== CREATE TASK SUCCESS ===');
 
       return this.mapToResponseDto(taskWithRelations);
@@ -202,6 +244,15 @@ export class TasksService {
 
       console.log('Update permission granted');
 
+      // Validate ownerId change if provided
+      if (updateTaskDto.ownerId && updateTaskDto.ownerId !== task.ownerId) {
+        console.log('Owner change requested from:', task.ownerId, 'to:', updateTaskDto.ownerId);
+        
+        // Validate that the proposed new owner is valid
+        await this.validateOwnerInOrganization(updateTaskDto.ownerId, currentUser);
+        console.log('Owner change validation successful');
+      }
+
       // Handle completion status
       if (updateTaskDto.status === TaskStatus.DONE && task.status !== TaskStatus.DONE) {
         updateTaskDto.completedAt = new Date().toISOString();
@@ -221,6 +272,28 @@ export class TasksService {
       });
 
       console.log('Task updated successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          currentUser.id,
+          AuditAction.UPDATE,
+          AuditResource.TASK,
+          {
+            resourceId: taskId,
+            details: {
+              updatedFields: Object.keys(updateTaskDto),
+              changes: updateTaskDto,
+              previousOwnerId: task.ownerId,
+              newOwnerId: updatedTask.ownerId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== UPDATE TASK SUCCESS ===');
 
       return this.mapToResponseDto(updatedTask);
@@ -234,33 +307,101 @@ export class TasksService {
 
   async deleteTask(taskId: string, currentUser: any): Promise<void> {
     console.log('=== DELETE TASK START ===');
-    console.log('Deleting task:', taskId, 'for user:', currentUser.email);
-
+    console.log('Task ID:', taskId);
+    console.log('Current User:', currentUser.id, currentUser.email);
+    
     try {
       const task = await this.taskRepository.findOne({
         where: { id: taskId },
-        relations: ['owner', 'organization'],
+        relations: ['owner', 'organization']
       });
 
       if (!task) {
-        console.log('Task not found:', taskId);
+        console.log('Task not found');
         throw new NotFoundException('Task not found');
       }
 
-      // Check if user has permission to delete this task
-      const canDelete = await this.checkTaskDeletePermission(task, currentUser);
-      if (!canDelete) {
-        console.log('Delete permission denied for task:', taskId, 'user:', currentUser.email);
-        throw new ForbiddenException('You do not have permission to delete this task');
+      // Check if user can delete this task
+      if (task.ownerId !== currentUser.id && currentUser.role.name !== RoleType.OWNER && currentUser.role.name !== RoleType.ADMIN) {
+        console.log('User not authorized to delete this task');
+        throw new ForbiddenException('You can only delete your own tasks or be an admin/owner');
       }
 
-      console.log('Delete permission granted');
-      await this.taskRepository.delete(taskId);
+      await this.taskRepository.remove(task);
       console.log('Task deleted successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          currentUser.id,
+          AuditAction.DELETE,
+          AuditResource.TASK,
+          {
+            resourceId: taskId,
+            details: {
+              title: task.title,
+              status: task.status,
+              ownerId: task.ownerId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== DELETE TASK SUCCESS ===');
     } catch (error) {
       console.log('=== DELETE TASK ERROR ===');
-      console.log('Task delete error:', error.message);
+      console.log('Delete error:', error.message);
+      console.log('Error details:', error);
+      throw error;
+    }
+  }
+
+  async bulkUpdateTasks(updates: BulkUpdateTaskDto[], currentUser: any): Promise<TaskResponseDto[]> {
+    console.log('=== BULK UPDATE TASKS START ===');
+    console.log('Updates:', updates);
+    console.log('Current User:', currentUser.id, currentUser.email);
+
+    try {
+      const updatedTasks: TaskResponseDto[] = [];
+
+      for (const update of updates) {
+        const task = await this.taskRepository.findOne({
+          where: { id: update.id },
+          relations: ['owner', 'organization']
+        });
+
+        if (!task) {
+          console.log(`Task ${update.id} not found`);
+          continue; // Skip missing tasks
+        }
+
+        // Check if user can update this task
+        if (task.ownerId !== currentUser.id && currentUser.role.name !== RoleType.OWNER && currentUser.role.name !== RoleType.ADMIN) {
+          console.log(`User not authorized to update task ${update.id}`);
+          continue; // Skip unauthorized tasks
+        }
+
+        // Update the task fields
+        if (update.sortOrder !== undefined) {
+          task.sortOrder = update.sortOrder;
+        }
+        if (update.status) {
+          task.status = update.status;
+        }
+
+        const updatedTask = await this.taskRepository.save(task);
+        updatedTasks.push(this.mapToResponseDto(updatedTask));
+      }
+
+      console.log(`Successfully updated ${updatedTasks.length} tasks`);
+      console.log('=== BULK UPDATE TASKS SUCCESS ===');
+      return updatedTasks;
+    } catch (error) {
+      console.log('=== BULK UPDATE TASKS ERROR ===');
+      console.log('Bulk update error:', error.message);
       console.log('Error details:', error);
       throw error;
     }
@@ -307,15 +448,53 @@ export class TasksService {
     return task.ownerId === currentUser.id;
   }
 
-  // Helper method to check task delete permission
-  private async checkTaskDeletePermission(task: Task, currentUser: any): Promise<boolean> {
-    // Only owners can delete tasks
-    if (currentUser.role === RoleType.OWNER) {
-      return await this.checkTaskAccess(task, currentUser);
+  // Helper method to validate owner assignment
+  private async validateOwnerInOrganization(ownerId: string, currentUser: any): Promise<User> {
+    console.log('Validating owner assignment:', ownerId, 'by user:', currentUser.email);
+
+    // Find the proposed owner
+    const proposedOwner = await this.userRepository.findOne({
+      where: { id: ownerId },
+      relations: ['organization']
+    });
+
+    if (!proposedOwner) {
+      console.log('Proposed owner not found:', ownerId);
+      throw new NotFoundException('User not found');
     }
 
-    // Admins and viewers cannot delete tasks
-    return false;
+    // Check if current user has permission to assign tasks to this owner
+    if (currentUser.role === RoleType.OWNER) {
+      // Owner can assign to users in their org + sub-orgs
+      const subOrgs = await this.organizationRepository.find({
+        where: { parentId: currentUser.organizationId }
+      });
+      
+      const accessibleOrgIds = [currentUser.organizationId];
+      if (subOrgs.length > 0) {
+        accessibleOrgIds.push(...subOrgs.map(org => org.id));
+      }
+      
+      if (!accessibleOrgIds.includes(proposedOwner.organizationId)) {
+        console.log('Owner cannot assign to user outside organization hierarchy');
+        throw new ForbiddenException('Cannot assign task to user outside your organization hierarchy');
+      }
+    } else if (currentUser.role === RoleType.ADMIN) {
+      // Admin can only assign to users in their same organization
+      if (proposedOwner.organizationId !== currentUser.organizationId) {
+        console.log('Admin cannot assign to user outside their organization');
+        throw new ForbiddenException('Cannot assign task to user outside your organization');
+      }
+    } else {
+      // Viewer can only assign to themselves
+      if (ownerId !== currentUser.id) {
+        console.log('Viewer cannot assign tasks to other users');
+        throw new ForbiddenException('You can only assign tasks to yourself');
+      }
+    }
+
+    console.log('Owner validation successful');
+    return proposedOwner;
   }
 
   // Helper method to map Task entity to TaskResponseDto

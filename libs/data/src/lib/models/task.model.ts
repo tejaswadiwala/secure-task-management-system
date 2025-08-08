@@ -77,7 +77,7 @@ export class Task {
   ownerId: string;
 
   // Many-to-one relationship with user (owner)
-  @ManyToOne(() => User, user => user.ownedTasks, {
+  @ManyToOne(() => User, {
     eager: true,
   })
   owner: User;
@@ -87,7 +87,7 @@ export class Task {
   organizationId: string;
 
   // Many-to-one relationship with organization
-  @ManyToOne(() => Organization, organization => organization.tasks, {
+  @ManyToOne(() => Organization, {
     eager: true,
   })
   organization: Organization;

@@ -4,8 +4,11 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 // Import from libs
-import { User, Organization, Role, RegisterDto, LoginDto, AuthResponseDto, UserProfile, RoleType } from '@data';
+import { User, Organization, Role, RegisterDto, LoginDto, AuthResponseDto, UserProfile, RoleType, AuditAction, AuditResource } from '@data';
 import { AuthService } from '@auth';
+
+// Import audit service
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class AuthApplicationService {
@@ -16,7 +19,8 @@ export class AuthApplicationService {
     private organizationRepository: Repository<Organization>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
-    private authService: AuthService
+    private authService: AuthService,
+    private auditService: AuditService
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -181,6 +185,26 @@ export class AuthApplicationService {
 
       console.log('Login successful for user:', userProfile.email, 'with role:', userProfile.role);
       console.log('JWT token generated successfully');
+
+      // Log audit action
+      try {
+        await this.auditService.logAction(
+          user.id,
+          AuditAction.LOGIN,
+          AuditResource.AUTH,
+          {
+            details: {
+              email: user.email,
+              role: user.role.name,
+              organizationId: user.organizationId,
+            },
+            success: true,
+          }
+        );
+      } catch (auditError) {
+        console.log('Failed to log audit action:', auditError.message);
+      }
+
       console.log('=== LOGIN ENDPOINT SUCCESS ===');
 
       return {

@@ -5,8 +5,11 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 // Import entities from libs
-import { Task, User, Organization, Role } from '@data';
+import { Task, User, Organization, Role, AuditLog } from '@data';
 import { AuthService, JwtStrategy } from '@auth';
+
+// Import audit service
+import { AuditService } from '../audit/audit.service';
 
 // Local components
 import { TasksController } from './tasks.controller';
@@ -15,7 +18,7 @@ import { TasksService } from './tasks.service';
 @Module({
   imports: [
     // Import entities for repository injection
-    TypeOrmModule.forFeature([Task, User, Organization, Role]),
+    TypeOrmModule.forFeature([Task, User, Organization, Role, AuditLog]),
     
     // Passport for authentication strategies
     PassportModule,
@@ -35,6 +38,7 @@ import { TasksService } from './tasks.service';
   controllers: [TasksController],
   providers: [
     TasksService,
+    AuditService, // For audit logging
     AuthService, // For JWT functionality
     JwtStrategy, // For route protection
   ],
