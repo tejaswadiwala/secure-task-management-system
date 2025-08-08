@@ -43,8 +43,11 @@ export class CreateTaskDto {
   @IsNumber()
   sortOrder?: number = 0;
 
+  @IsOptional()
+  @IsUUID()
+  ownerId?: string; // Optional: if not provided, defaults to current user
+
   // organizationId will be automatically set from the authenticated user
-  // ownerId will be automatically set from the authenticated user
 }
 
 // Update Task DTO
@@ -83,6 +86,10 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsNumber()
   sortOrder?: number;
+
+  @IsOptional()
+  @IsUUID()
+  ownerId?: string; // Allow reassigning task ownership
 }
 
 // Task Response DTO (what gets returned to frontend)

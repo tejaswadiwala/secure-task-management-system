@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import { 
   Task,  
   Organization, 
+  User,
   CreateTaskDto, 
   UpdateTaskDto, 
   TaskResponseDto,
@@ -22,6 +23,8 @@ export class TasksService {
     private taskRepository: Repository<Task>,
     @InjectRepository(Organization)
     private organizationRepository: Repository<Organization>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
   ) {}
 
   async createTask(createTaskDto: CreateTaskDto, currentUser: any): Promise<TaskResponseDto> {
@@ -38,16 +41,26 @@ export class TasksService {
 
       console.log('User has permission to create tasks');
 
+      // Determine the owner of the task
+      let taskOwnerId = currentUser.id; // Default to current user
+      
+      if (createTaskDto.ownerId) {
+        console.log('Custom ownerId provided:', createTaskDto.ownerId);
+        // Validate that the proposed owner is valid
+        await this.validateOwnerInOrganization(createTaskDto.ownerId, currentUser);
+        taskOwnerId = createTaskDto.ownerId;
+      }
+
       // Create new task
       const newTask = this.taskRepository.create({
         ...createTaskDto,
-        ownerId: currentUser.id,
+        ownerId: taskOwnerId,
         organizationId: currentUser.organizationId,
       });
 
       console.log('Saving task to database...');
       const savedTask = await this.taskRepository.save(newTask);
-      console.log('Task created with ID:', savedTask.id);
+      console.log('Task created with ID:', savedTask.id, 'assigned to:', taskOwnerId);
 
       // Load task with relations for response
       const taskWithRelations = await this.taskRepository.findOne({
@@ -203,6 +216,15 @@ export class TasksService {
 
       console.log('Update permission granted');
 
+      // Validate ownerId change if provided
+      if (updateTaskDto.ownerId && updateTaskDto.ownerId !== task.ownerId) {
+        console.log('Owner change requested from:', task.ownerId, 'to:', updateTaskDto.ownerId);
+        
+        // Validate that the proposed new owner is valid
+        await this.validateOwnerInOrganization(updateTaskDto.ownerId, currentUser);
+        console.log('Owner change validation successful');
+      }
+
       // Handle completion status
       if (updateTaskDto.status === TaskStatus.DONE && task.status !== TaskStatus.DONE) {
         updateTaskDto.completedAt = new Date().toISOString();
@@ -355,15 +377,53 @@ export class TasksService {
     return task.ownerId === currentUser.id;
   }
 
-  // Helper method to check task delete permission
-  private async checkTaskDeletePermission(task: Task, currentUser: any): Promise<boolean> {
-    // Only owners can delete tasks
-    if (currentUser.role === RoleType.OWNER) {
-      return await this.checkTaskAccess(task, currentUser);
+  // Helper method to validate owner assignment
+  private async validateOwnerInOrganization(ownerId: string, currentUser: any): Promise<User> {
+    console.log('Validating owner assignment:', ownerId, 'by user:', currentUser.email);
+
+    // Find the proposed owner
+    const proposedOwner = await this.userRepository.findOne({
+      where: { id: ownerId },
+      relations: ['organization']
+    });
+
+    if (!proposedOwner) {
+      console.log('Proposed owner not found:', ownerId);
+      throw new NotFoundException('User not found');
     }
 
-    // Admins and viewers cannot delete tasks
-    return false;
+    // Check if current user has permission to assign tasks to this owner
+    if (currentUser.role === RoleType.OWNER) {
+      // Owner can assign to users in their org + sub-orgs
+      const subOrgs = await this.organizationRepository.find({
+        where: { parentId: currentUser.organizationId }
+      });
+      
+      const accessibleOrgIds = [currentUser.organizationId];
+      if (subOrgs.length > 0) {
+        accessibleOrgIds.push(...subOrgs.map(org => org.id));
+      }
+      
+      if (!accessibleOrgIds.includes(proposedOwner.organizationId)) {
+        console.log('Owner cannot assign to user outside organization hierarchy');
+        throw new ForbiddenException('Cannot assign task to user outside your organization hierarchy');
+      }
+    } else if (currentUser.role === RoleType.ADMIN) {
+      // Admin can only assign to users in their same organization
+      if (proposedOwner.organizationId !== currentUser.organizationId) {
+        console.log('Admin cannot assign to user outside their organization');
+        throw new ForbiddenException('Cannot assign task to user outside your organization');
+      }
+    } else {
+      // Viewer can only assign to themselves
+      if (ownerId !== currentUser.id) {
+        console.log('Viewer cannot assign tasks to other users');
+        throw new ForbiddenException('You can only assign tasks to yourself');
+      }
+    }
+
+    console.log('Owner validation successful');
+    return proposedOwner;
   }
 
   // Helper method to map Task entity to TaskResponseDto
