@@ -109,7 +109,7 @@ import { TaskStatus, TaskPriority, TaskCategory } from '@data';
             </div>
 
             <!-- Status and Due Date Row -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <!-- Status Field -->
               <div>
                 <label for="status" class="block text-sm font-medium text-gray-700 mb-1">
@@ -139,6 +139,27 @@ import { TaskStatus, TaskPriority, TaskCategory } from '@data';
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   [min]="getMinDate()"
                 />
+              </div>
+            </div>
+
+            <!-- Owner ID Field -->
+            <div class="mb-6">
+              <label for="ownerId" class="block text-sm font-medium text-gray-700 mb-1">
+                Assigned To (Owner ID)
+              </label>
+              <input
+                id="ownerId"
+                type="text"
+                formControlName="ownerId"
+                placeholder="Enter user ID to assign task (optional)"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                [class.border-red-500]="taskForm.get('ownerId')?.invalid && taskForm.get('ownerId')?.touched"
+              />
+              <div class="mt-1 text-xs text-gray-500">
+                Leave empty to assign to yourself. Enter a valid user ID to assign to another user.
+              </div>
+              <div *ngIf="taskForm.get('ownerId')?.invalid && taskForm.get('ownerId')?.touched" class="mt-1 text-sm text-red-600">
+                <span *ngIf="taskForm.get('ownerId')?.errors?.['pattern']">Please enter a valid UUID</span>
               </div>
             </div>
 
@@ -200,7 +221,8 @@ export class TaskFormComponent implements OnInit {
       priority: ['medium'],
       category: ['work'],
       status: [TaskStatus.TODO],
-      dueDate: ['']
+      dueDate: [''],
+      ownerId: ['', [Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)]]
     });
   }
 
@@ -218,7 +240,8 @@ export class TaskFormComponent implements OnInit {
         priority: this.task.priority || 'medium',
         category: this.task.category || 'work',
         status: this.task.status || TaskStatus.TODO,
-        dueDate: this.task.dueDate ? this.formatDateForInput(this.task.dueDate) : ''
+        dueDate: this.task.dueDate ? this.formatDateForInput(this.task.dueDate) : '',
+        ownerId: this.task.ownerId || ''
       });
     }
   }
@@ -230,7 +253,8 @@ export class TaskFormComponent implements OnInit {
       const formValue = this.taskForm.value;
       const taskData = {
         ...formValue,
-        dueDate: formValue.dueDate ? new Date(formValue.dueDate).toISOString() : null
+        dueDate: formValue.dueDate ? new Date(formValue.dueDate).toISOString() : null,
+        ownerId: formValue.ownerId && formValue.ownerId.trim() !== '' ? formValue.ownerId.trim() : undefined
       };
 
       console.log('Submitting task:', taskData);

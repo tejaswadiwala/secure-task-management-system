@@ -58,6 +58,24 @@ import { TaskStatus, TaskPriority, TaskCategory } from '@data';
         </span>
       </div>
 
+      <!-- Assigned To (Owner ID) -->
+      <div class="mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+          <span class="text-xs text-gray-600">
+            Assigned to: 
+            <span class="font-medium text-gray-900">
+              {{ task.owner?.firstName && task.owner?.lastName ? task.owner.firstName + ' ' + task.owner.lastName : task.ownerId || 'Unassigned' }}
+            </span>
+          </span>
+        </div>
+        <div *ngIf="task.ownerId" class="mt-1">
+          <span class="text-xs text-gray-400 font-mono">ID: {{ task.ownerId }}</span>
+        </div>
+      </div>
+
       <!-- Task Footer -->
       <div class="flex-between">
         <!-- Status Badge -->
