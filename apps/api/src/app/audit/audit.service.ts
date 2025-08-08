@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Like, Between } from 'typeorm';
 
@@ -15,8 +15,6 @@ import {
 
 @Injectable()
 export class AuditService {
-  private readonly logger = new Logger(AuditService.name);
-
   constructor(
     @InjectRepository(AuditLog)
     private auditLogRepository: Repository<AuditLog>
@@ -67,9 +65,9 @@ export class AuditService {
         (options.success === false ? ' - FAILED' : ' - SUCCESS');
       
       if (options.success === false) {
-        this.logger.error(logMessage + (options.errorMessage ? `: ${options.errorMessage}` : ''));
+        console.log(logMessage + (options.errorMessage ? `: ${options.errorMessage}` : ''));
       } else {
-        this.logger.log(logMessage);
+        console.log(logMessage);
       }
 
       console.log('Audit log saved successfully:', savedLog.id);
@@ -78,8 +76,7 @@ export class AuditService {
       return savedLog;
     } catch (error) {
       console.log('=== AUDIT LOG ERROR ===');
-      console.log('Error saving audit log:', error.message);
-      this.logger.error(`Failed to save audit log: ${error.message}`, error.stack);
+      console.error('Error saving audit log:', error);
       throw error;
     }
   }
@@ -206,8 +203,7 @@ export class AuditService {
       return result;
     } catch (error) {
       console.log('=== GET AUDIT LOGS ERROR ===');
-      console.log('Error fetching audit logs:', error.message);
-      this.logger.error(`Failed to fetch audit logs: ${error.message}`, error.stack);
+      console.error('Error fetching audit logs:', error);
       throw error;
     }
   }
@@ -273,8 +269,7 @@ export class AuditService {
       return stats;
     } catch (error) {
       console.log('=== GET AUDIT STATS ERROR ===');
-      console.log('Error fetching audit stats:', error.message);
-      this.logger.error(`Failed to fetch audit stats: ${error.message}`, error.stack);
+      console.error('Error fetching audit stats:', error);
       throw error;
     }
   }
