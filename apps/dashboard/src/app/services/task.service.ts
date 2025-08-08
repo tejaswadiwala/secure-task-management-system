@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskStatus, TaskPriority } from '@data';
+import { environment } from '../../environments/environment';
 
 export interface TaskFilters {
   search?: string;
@@ -19,7 +20,7 @@ export interface TaskFilters {
 export class TaskService {
   private http = inject(HttpClient);
   
-  private readonly API_URL = '/api';
+  private readonly API_URL = environment.apiUrl;
 
   getTasks(): Observable<TaskResponseDto[]> {
     return this.http.get<TaskResponseDto[]>(`${this.API_URL}/tasks`).pipe(

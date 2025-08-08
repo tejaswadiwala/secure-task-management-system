@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TaskStatus, TaskPriority, TaskCategory } from '@data';
 
 @Component({
   selector: 'app-task-form',
@@ -118,11 +119,10 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
                   formControlName="status"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
-                  <option value="TODO">To Do</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="REVIEW">Review</option>
-                  <option value="DONE">Done</option>
-                  <option value="BLOCKED">Blocked</option>
+                  <option value="todo">To Do</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="done">Done</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
               </div>
 
@@ -187,13 +187,18 @@ export class TaskFormComponent implements OnInit {
   taskForm: FormGroup;
   isLoading = false;
 
+  // Enum access for template
+  TaskStatus = TaskStatus;
+  TaskPriority = TaskPriority;
+  TaskCategory = TaskCategory;
+
   constructor() {
     this.taskForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', [Validators.maxLength(1000)]],
-      priority: ['MEDIUM'],
-      category: ['WORK'],
-      status: ['TODO'],
+      priority: [TaskPriority.MEDIUM],
+      category: [TaskCategory.WORK],
+      status: [TaskStatus.TODO],
       dueDate: ['']
     });
   }
@@ -209,9 +214,9 @@ export class TaskFormComponent implements OnInit {
       this.taskForm.patchValue({
         title: this.task.title || '',
         description: this.task.description || '',
-        priority: this.task.priority || 'MEDIUM',
-        category: this.task.category || 'WORK',
-        status: this.task.status || 'TODO',
+        priority: this.task.priority || TaskPriority.MEDIUM,
+        category: this.task.category || TaskCategory.WORK,
+        status: this.task.status || TaskStatus.TODO,
         dueDate: this.task.dueDate ? this.formatDateForInput(this.task.dueDate) : ''
       });
     }
@@ -251,9 +256,9 @@ export class TaskFormComponent implements OnInit {
     this.taskForm.reset({
       title: '',
       description: '',
-      priority: 'MEDIUM',
-      category: 'WORK',
-      status: 'TODO',
+      priority: TaskPriority.MEDIUM,
+      category: TaskCategory.WORK,
+      status: TaskStatus.TODO,
       dueDate: ''
     });
     this.isLoading = false;

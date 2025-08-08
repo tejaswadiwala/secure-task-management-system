@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TaskStatus, TaskPriority, TaskCategory } from '@data';
 
 @Component({
   selector: 'app-task-card',
@@ -67,11 +68,10 @@ import { CommonModule } from '@angular/common';
             [class]="getStatusClass(task.status)"
             class="status-badge appearance-none pr-6 cursor-pointer"
           >
-            <option value="TODO">TODO</option>
-            <option value="IN_PROGRESS">IN PROGRESS</option>
-            <option value="REVIEW">REVIEW</option>
-            <option value="DONE">DONE</option>
-            <option value="BLOCKED">BLOCKED</option>
+            <option value="todo">TODO</option>
+            <option value="in_progress">IN PROGRESS</option>
+            <option value="done">DONE</option>
+            <option value="cancelled">CANCELLED</option>
           </select>
           <svg class="absolute right-1 top-1/2 transform -translate-y-1/2 w-3 h-3 text-white pointer-events-none" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -90,7 +90,7 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <!-- Progress Bar (if applicable) -->
-      <div *ngIf="task.status === 'IN_PROGRESS'" class="mt-3">
+      <div *ngIf="task.status === TaskStatus.IN_PROGRESS" class="mt-3">
         <div class="w-full bg-gray-200 rounded-full h-1.5">
           <div class="bg-primary-600 h-1.5 rounded-full transition-all duration-300" [style.width.%]="getProgressPercentage()"></div>
         </div>
@@ -134,6 +134,11 @@ export class TaskCardComponent {
 
   showActions = false;
 
+  // Enum access for template
+  TaskStatus = TaskStatus;
+  TaskPriority = TaskPriority;
+  TaskCategory = TaskCategory;
+
   onEdit(): void {
     this.edit.emit(this.task);
   }
@@ -160,11 +165,10 @@ export class TaskCardComponent {
 
   getStatusClass(status: string): string {
     const statusClasses = {
-      'TODO': 'bg-status-todo',
-      'IN_PROGRESS': 'bg-status-progress',
-      'REVIEW': 'bg-status-review', 
-      'DONE': 'bg-status-done',
-      'BLOCKED': 'bg-status-blocked'
+      [TaskStatus.TODO]: 'bg-status-todo',
+      [TaskStatus.IN_PROGRESS]: 'bg-status-progress',
+      [TaskStatus.DONE]: 'bg-status-done',
+      [TaskStatus.CANCELLED]: 'bg-status-blocked'
     };
     return statusClasses[status as keyof typeof statusClasses] || 'bg-gray-500';
   }
@@ -205,10 +209,10 @@ export class TaskCardComponent {
 
   getProgressPercentage(): number {
     // Simple progress calculation based on status
-    if (this.task.status === 'TODO') return 0;
-    if (this.task.status === 'IN_PROGRESS') return 50;
-    if (this.task.status === 'REVIEW') return 75;
-    if (this.task.status === 'DONE') return 100;
+    if (this.task.status === TaskStatus.TODO) return 0;
+    if (this.task.status === TaskStatus.IN_PROGRESS) return 50;
+    if (this.task.status === TaskStatus.DONE) return 100;
+    if (this.task.status === TaskStatus.CANCELLED) return 0;
     return 25; // Default for other statuses
   }
 } 
