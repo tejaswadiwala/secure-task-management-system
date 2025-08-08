@@ -211,6 +211,10 @@ export class TaskBoardComponent implements OnInit {
   selectedTask: TaskResponseDto | null = null;
   isListView = false;
 
+  // Task data
+  allTasks: TaskResponseDto[] = [];
+  currentFilters: any = null;
+
   // Task columns for Kanban board
   columns: TaskColumn[] = [
     {
@@ -245,7 +249,8 @@ export class TaskBoardComponent implements OnInit {
     this.taskService.getTasks().subscribe({
       next: (tasks) => {
         console.log('Tasks loaded:', tasks);
-        this.organizeTasks(tasks);
+        this.allTasks = tasks;
+        this.applyFiltersAndOrganize();
         this.isLoading = false;
       },
       error: (error) => {
@@ -280,8 +285,117 @@ export class TaskBoardComponent implements OnInit {
 
   onFiltersChange(filters: any): void {
     console.log('Filters changed:', filters);
-    // TODO: Implement filtering logic
-    this.loadTasks();
+    this.currentFilters = filters;
+    this.applyFiltersAndOrganize();
+  }
+
+  applyFiltersAndOrganize(): void {
+    let filteredTasks = [...this.allTasks];
+
+    if (this.currentFilters) {
+      filteredTasks = this.filterTasks(filteredTasks, this.currentFilters);
+    }
+
+    this.organizeTasks(filteredTasks);
+  }
+
+  private filterTasks(tasks: TaskResponseDto[], filters: any): TaskResponseDto[] {
+    let filtered = tasks;
+    console.log('Filtering tasks:', { totalTasks: tasks.length, filters });
+
+    // Apply search filter
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(task => 
+        task.title.toLowerCase().includes(searchTerm) ||
+        (task.description && task.description.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    // Apply status filter
+    if (filters.status) {
+      filtered = filtered.filter(task => task.status === filters.status);
+    }
+
+    // Apply priority filter
+    if (filters.priority) {
+      filtered = filtered.filter(task => task.priority === filters.priority);
+    }
+
+    // Apply category filter
+    if (filters.category) {
+      filtered = filtered.filter(task => task.category === filters.category);
+    }
+
+    // Apply quick filters
+    if (filters.quickFilter && filters.quickFilter !== 'all') {
+      filtered = this.applyQuickFilter(filtered, filters.quickFilter);
+    }
+
+    // Apply sorting
+    if (filters.sortBy) {
+      filtered = this.sortTasks(filtered, filters.sortBy);
+    }
+
+    console.log('Filtered result:', { filteredCount: filtered.length });
+    return filtered;
+  }
+
+  private applyQuickFilter(tasks: TaskResponseDto[], quickFilter: string): TaskResponseDto[] {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    switch (quickFilter) {
+      case 'my':
+        // Assuming we need to check current user - for now return all tasks
+        // This would need to check task.ownerId against current user
+        return tasks;
+      
+      case 'due-today':
+        return tasks.filter(task => {
+          if (!task.dueDate) return false;
+          const dueDate = new Date(task.dueDate);
+          return dueDate >= today && dueDate < tomorrow;
+        });
+      
+      case 'overdue':
+        return tasks.filter(task => {
+          if (!task.dueDate) return false;
+          const dueDate = new Date(task.dueDate);
+          return dueDate < today && task.status !== TaskStatus.DONE;
+        });
+      
+      case 'high-priority':
+        return tasks.filter(task => task.priority === 'high');
+      
+      default:
+        return tasks;
+    }
+  }
+
+  private sortTasks(tasks: TaskResponseDto[], sortBy: string): TaskResponseDto[] {
+    return [...tasks].sort((a, b) => {
+      switch (sortBy) {
+        case 'title':
+          return a.title.localeCompare(b.title);
+        case 'priority':
+          const priorityOrder = { 'low': 1, 'medium': 2, 'high': 3, 'urgent': 4 };
+          return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
+                 (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+        case 'dueDate':
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        case 'updatedAt':
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        case 'createdAt':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
   }
 
   onTaskDrop(event: CdkDragDrop<TaskResponseDto[]>): void {

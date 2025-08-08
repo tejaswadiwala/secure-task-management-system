@@ -83,11 +83,10 @@ import { FormsModule } from '@angular/forms';
                 [disabled]="isLoading"
               >
                 <option value="">All Statuses</option>
-                <option value="TODO">To Do</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="REVIEW">Review</option>
-                <option value="DONE">Done</option>
-                <option value="BLOCKED">Blocked</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="done">Done</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 
@@ -101,10 +100,10 @@ import { FormsModule } from '@angular/forms';
                 [disabled]="isLoading"
               >
                 <option value="">All Priorities</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
               </select>
             </div>
 
@@ -118,10 +117,11 @@ import { FormsModule } from '@angular/forms';
                 [disabled]="isLoading"
               >
                 <option value="">All Categories</option>
-                <option value="WORK">Work</option>
-                <option value="PERSONAL">Personal</option>
-                <option value="URGENT">Urgent</option>
-                <option value="MEETING">Meeting</option>
+                <option value="work">Work</option>
+                <option value="personal">Personal</option>
+                <option value="project">Project</option>
+                <option value="meeting">Meeting</option>
+                <option value="other">Other</option>
               </select>
             </div>
 
