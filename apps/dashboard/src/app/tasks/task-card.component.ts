@@ -155,10 +155,10 @@ export class TaskCardComponent {
 
   getPriorityClass(priority: string): string {
     const priorityClasses = {
-      'LOW': 'bg-priority-low',
-      'MEDIUM': 'bg-priority-medium', 
-      'HIGH': 'bg-priority-high',
-      'URGENT': 'bg-priority-urgent'
+      'low': 'bg-priority-low',
+      'medium': 'bg-priority-medium', 
+      'high': 'bg-priority-high',
+      'urgent': 'bg-priority-urgent'
     };
     return priorityClasses[priority as keyof typeof priorityClasses] || 'bg-gray-400';
   }
@@ -175,10 +175,11 @@ export class TaskCardComponent {
 
   getCategoryClass(category: string): string {
     const categoryClasses = {
-      'WORK': 'bg-blue-100 text-blue-800',
-      'PERSONAL': 'bg-green-100 text-green-800',
-      'URGENT': 'bg-red-100 text-red-800',
-      'MEETING': 'bg-purple-100 text-purple-800'
+      'work': 'bg-blue-100 text-blue-800',
+      'personal': 'bg-green-100 text-green-800',
+      'project': 'bg-indigo-100 text-indigo-800',
+      'meeting': 'bg-purple-100 text-purple-800',
+      'other': 'bg-gray-100 text-gray-800'
     };
     return categoryClasses[category as keyof typeof categoryClasses] || 'bg-gray-100 text-gray-800';
   }

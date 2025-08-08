@@ -82,10 +82,10 @@ import { TaskStatus, TaskPriority, TaskCategory } from '@data';
                   formControlName="priority"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
-                  <option value="LOW">Low</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="HIGH">High</option>
-                  <option value="URGENT">Urgent</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
                 </select>
               </div>
 
@@ -99,10 +99,11 @@ import { TaskStatus, TaskPriority, TaskCategory } from '@data';
                   formControlName="category"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 >
-                  <option value="WORK">Work</option>
-                  <option value="PERSONAL">Personal</option>
-                  <option value="URGENT">Urgent</option>
-                  <option value="MEETING">Meeting</option>
+                  <option value="work">Work</option>
+                  <option value="personal">Personal</option>
+                  <option value="project">Project</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
             </div>
@@ -196,8 +197,8 @@ export class TaskFormComponent implements OnInit {
     this.taskForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
       description: ['', [Validators.maxLength(1000)]],
-      priority: [TaskPriority.MEDIUM],
-      category: [TaskCategory.WORK],
+      priority: ['medium'],
+      category: ['work'],
       status: [TaskStatus.TODO],
       dueDate: ['']
     });
@@ -214,8 +215,8 @@ export class TaskFormComponent implements OnInit {
       this.taskForm.patchValue({
         title: this.task.title || '',
         description: this.task.description || '',
-        priority: this.task.priority || TaskPriority.MEDIUM,
-        category: this.task.category || TaskCategory.WORK,
+        priority: this.task.priority || 'medium',
+        category: this.task.category || 'work',
         status: this.task.status || TaskStatus.TODO,
         dueDate: this.task.dueDate ? this.formatDateForInput(this.task.dueDate) : ''
       });
@@ -256,8 +257,8 @@ export class TaskFormComponent implements OnInit {
     this.taskForm.reset({
       title: '',
       description: '',
-      priority: TaskPriority.MEDIUM,
-      category: TaskCategory.WORK,
+      priority: 'medium',
+      category: 'work',
       status: TaskStatus.TODO,
       dueDate: ''
     });
