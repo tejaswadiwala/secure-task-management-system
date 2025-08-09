@@ -13,22 +13,24 @@ import {
 import { 
   AuditLogQueryDto, 
   AuditLogResponseDto, 
-  PaginatedResponse 
+  PaginatedResponse,
+  RoleType 
 } from '@data';
-import { JwtAuthGuard, CurrentUser, CanViewAuditLog } from '@auth';
+import { JwtAuthGuard, CurrentUser, CanViewAuditLog, Roles, RolesGuard } from '@auth';
 
 // Local service
 import { AuditService } from './audit.service';
 
 @Controller('audit-log')
-@UseGuards(JwtAuthGuard) // Protect all endpoints with JWT authentication
+@UseGuards(JwtAuthGuard, RolesGuard) // Protect all endpoints with JWT authentication and RBAC
 @UseInterceptors(ClassSerializerInterceptor)
 export class AuditController {
   constructor(private auditService: AuditService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @CanViewAuditLog() // Only Owner/Admin can view audit logs
+  @Roles(RoleType.ADMIN) // Only Admin and Owner can view audit logs
+  @CanViewAuditLog() // Additional permission check
   async getAuditLogs(
     @Query() queryDto: AuditLogQueryDto,
     @CurrentUser() currentUser: any

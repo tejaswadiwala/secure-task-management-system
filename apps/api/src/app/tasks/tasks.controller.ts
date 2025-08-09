@@ -20,21 +20,23 @@ import {
   UpdateTaskDto, 
   TaskResponseDto, 
   TaskQueryDto,
-  BulkUpdateTaskDto 
+  BulkUpdateTaskDto,
+  RoleType 
 } from '@data';
-import { JwtAuthGuard, CurrentUser } from '@auth';
+import { JwtAuthGuard, CurrentUser, Roles, RolesGuard } from '@auth';
 
 // Local service
 import { TasksService } from './tasks.service';
 
 @Controller('tasks')
-@UseGuards(JwtAuthGuard) // Protect all endpoints with JWT authentication
+@UseGuards(JwtAuthGuard, RolesGuard) // Protect all endpoints with JWT authentication and RBAC
 @UseInterceptors(ClassSerializerInterceptor)
 export class TasksController {
   constructor(private tasksService: TasksService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Roles(RoleType.VIEWER) // All authenticated users can create tasks
   async createTask(
     @Body() createTaskDto: CreateTaskDto,
     @CurrentUser() currentUser: any
@@ -44,6 +46,7 @@ export class TasksController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.VIEWER) // All authenticated users can view tasks (filtered by service)
   async getTasks(
     @Query() queryDto: TaskQueryDto,
     @CurrentUser() currentUser: any
@@ -53,6 +56,7 @@ export class TasksController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.VIEWER) // All authenticated users can view individual tasks (access controlled by service)
   async getTaskById(
     @Param('id') taskId: string,
     @CurrentUser() currentUser: any
@@ -62,6 +66,7 @@ export class TasksController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.VIEWER) // All users can update tasks (permission checked by service)
   async updateTask(
     @Param('id') taskId: string,
     @Body() updateTaskDto: UpdateTaskDto,
@@ -72,6 +77,7 @@ export class TasksController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Roles(RoleType.ADMIN) // Only Admin and Owner can delete tasks
   async deleteTask(
     @Param('id') taskId: string,
     @CurrentUser() currentUser: any
@@ -81,6 +87,7 @@ export class TasksController {
 
   @Put('bulk-update')
   @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.VIEWER) // All users can bulk update (for drag-and-drop, permission checked by service)
   async bulkUpdateTasks(
     @Body() bulkUpdateDto: { tasks: BulkUpdateTaskDto[] },
     @CurrentUser() currentUser: any
