@@ -94,16 +94,15 @@ export class TasksService {
           }
         );
       } catch (auditError) {
-        console.log('Failed to log audit action:', auditError.message);
+        console.error('Failed to log audit action:', auditError);
       }
 
       console.log('=== CREATE TASK SUCCESS ===');
 
-      return this.mapToResponseDto(taskWithRelations);
+      return this.mapToResponseDto(taskWithRelations!);
     } catch (error) {
       console.log('=== CREATE TASK ERROR ===');
-      console.log('Task creation error:', error.message);
-      console.log('Error details:', error);
+      console.error('Task creation error:', error);
       throw error;
     }
   }
@@ -179,8 +178,7 @@ export class TasksService {
       return tasks.map(task => this.mapToResponseDto(task));
     } catch (error) {
       console.log('=== GET TASKS ERROR ===');
-      console.log('Tasks fetch error:', error.message);
-      console.log('Error details:', error);
+      console.error('Tasks fetch error:', error);
       throw error;
     }
   }
@@ -213,8 +211,7 @@ export class TasksService {
       return this.mapToResponseDto(task);
     } catch (error) {
       console.log('=== GET TASK BY ID ERROR ===');
-      console.log('Task fetch error:', error.message);
-      console.log('Error details:', error);
+      console.error('Task fetch error:', error);
       throw error;
     }
   }
@@ -257,8 +254,8 @@ export class TasksService {
       if (updateTaskDto.status === TaskStatus.DONE && task.status !== TaskStatus.DONE) {
         updateTaskDto.completedAt = new Date().toISOString();
         console.log('Task marked as completed');
-      } else if (updateTaskDto.status !== TaskStatus.DONE) {
-        updateTaskDto.completedAt = null;
+      } else if (updateTaskDto.status && updateTaskDto.status !== TaskStatus.DONE && task.status === TaskStatus.DONE) {
+        updateTaskDto.completedAt = undefined;
       }
 
       // Update task
@@ -283,24 +280,23 @@ export class TasksService {
             resourceId: taskId,
             details: {
               updatedFields: Object.keys(updateTaskDto),
-              changes: updateTaskDto,
-              previousOwnerId: task.ownerId,
-              newOwnerId: updatedTask.ownerId,
+                          changes: updateTaskDto,
+            previousOwnerId: task.ownerId,
+            newOwnerId: updatedTask?.ownerId,
             },
             success: true,
           }
         );
       } catch (auditError) {
-        console.log('Failed to log audit action:', auditError.message);
+        console.error('Failed to log audit action:', auditError);
       }
 
       console.log('=== UPDATE TASK SUCCESS ===');
 
-      return this.mapToResponseDto(updatedTask);
+      return this.mapToResponseDto(updatedTask!);
     } catch (error) {
       console.log('=== UPDATE TASK ERROR ===');
-      console.log('Task update error:', error.message);
-      console.log('Error details:', error);
+      console.error('Task update error:', error);
       throw error;
     }
   }
@@ -347,14 +343,13 @@ export class TasksService {
           }
         );
       } catch (auditError) {
-        console.log('Failed to log audit action:', auditError.message);
+        console.error('Failed to log audit action:', auditError);
       }
 
       console.log('=== DELETE TASK SUCCESS ===');
     } catch (error) {
       console.log('=== DELETE TASK ERROR ===');
-      console.log('Delete error:', error.message);
-      console.log('Error details:', error);
+      console.error('Delete error:', error);
       throw error;
     }
   }
@@ -401,8 +396,7 @@ export class TasksService {
       return updatedTasks;
     } catch (error) {
       console.log('=== BULK UPDATE TASKS ERROR ===');
-      console.log('Bulk update error:', error.message);
-      console.log('Error details:', error);
+      console.error('Bulk update error:', error);
       throw error;
     }
   }

@@ -54,7 +54,7 @@ export class AuthApplicationService {
       console.log('Organization found:', organization.name);
 
       // Get role - use provided roleId or default to VIEWER role
-      let role: Role;
+      let role: Role | null;
       if (roleId) {
         console.log('Looking up provided role:', roleId);
         role = await this.roleRepository.findOne({
@@ -139,7 +139,6 @@ export class AuthApplicationService {
       };
     } catch (error) {
       console.log('=== REGISTER ENDPOINT ERROR ===');
-      console.log('Registration error:', error.message);
       console.log('Error details:', error);
       throw error;
     }
@@ -202,7 +201,7 @@ export class AuthApplicationService {
           }
         );
       } catch (auditError) {
-        console.log('Failed to log audit action:', auditError.message);
+        console.log('Failed to log audit action:', auditError);
       }
 
       console.log('=== LOGIN ENDPOINT SUCCESS ===');
@@ -213,7 +212,6 @@ export class AuthApplicationService {
       };
     } catch (error) {
       console.log('=== LOGIN ENDPOINT ERROR ===');
-      console.log('Login error:', error.message);
       console.log('Error details:', error);
       throw error;
     }
