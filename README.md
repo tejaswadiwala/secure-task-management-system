@@ -81,15 +81,7 @@ erDiagram
         timestamp updatedAt
     }
     
-    Permission {
-        uuid id PK
-        string name UK
-        enum resource
-        enum action
-        string description
-        timestamp createdAt
-        timestamp updatedAt
-    }
+
     
     Task {
         uuid id PK
@@ -138,7 +130,7 @@ erDiagram
 
 **Role**
 - Three predefined roles: Owner (level 2), Admin (level 1), Viewer (level 0)
-- Contains array of permission IDs
+- Contains hardcoded permission strings for each role type
 - Level-based hierarchy for access control
 
 **Task**
@@ -147,9 +139,7 @@ erDiagram
 - Categories (WORK, PERSONAL, PROJECT, MEETING, OTHER)
 - Drag-and-drop sorting with sortOrder field
 
-**Permission**
-- Granular permissions for specific resources and actions
-- Used by roles to define access capabilities
+
 
 **AuditLog**
 - Tracks all user actions for security and compliance
