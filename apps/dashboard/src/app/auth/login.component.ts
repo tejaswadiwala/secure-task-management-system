@@ -95,9 +95,9 @@ import { AuthService } from '../services/auth.service';
           <div class="mt-6 p-4 bg-blue-50 rounded-md border border-blue-200">
             <h3 class="text-sm font-medium text-blue-800 mb-2">Demo Credentials:</h3>
             <div class="text-xs text-blue-700 space-y-1">
-              <p><strong>Owner:</strong> owner&#64;example.com / password123</p>
-              <p><strong>Admin:</strong> admin&#64;example.com / password123</p>
-              <p><strong>Viewer:</strong> viewer&#64;example.com / password123</p>
+              <p><strong>Owner:</strong> owner&#64;turbovets.com / password123</p>
+              <p><strong>Admin:</strong> admin&#64;turbovets.com / password123</p>
+              <p><strong>Viewer:</strong> viewer&#64;turbovets.com / password123</p>
             </div>
           </div>
         </form>

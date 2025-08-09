@@ -28,7 +28,10 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
-    const hasRole = requiredRoles.includes(user.role);
+    // Check role inheritance - higher roles inherit lower role permissions
+    const hasRole = requiredRoles.some(requiredRole =>
+      this.validateRoleHierarchy(user.role, requiredRole)
+    );
 
     if (!hasRole) {
       throw new ForbiddenException(
@@ -37,5 +40,21 @@ export class RolesGuard implements CanActivate {
     }
 
     return true;
+  }
+
+  /**
+   * Validate role hierarchy (higher roles inherit lower role permissions)
+   */
+  private validateRoleHierarchy(
+    userRole: RoleType,
+    requiredRole: RoleType
+  ): boolean {
+    const roleHierarchy = {
+      [RoleType.VIEWER]: 0,
+      [RoleType.ADMIN]: 1,
+      [RoleType.OWNER]: 2,
+    };
+
+    return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
   }
 }
